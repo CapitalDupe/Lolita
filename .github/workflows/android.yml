@@ -17,6 +17,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '17' }
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Test remote API
+        run: go test ./internal/remoteapi
       - uses: android-actions/setup-android@v3
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: '8.10.2' }
