@@ -21,6 +21,7 @@ import (
         _ "sxops/internal/compat" // glibc 2.35 compatibility (see compat.go)
         "sxops/internal/core"
         "sxops/internal/ui"
+        "sxops/internal/remoteapi"
 )
 
 const versionInfo = "sxops 1.6.47"
@@ -282,6 +283,18 @@ func main() {
                         os.Exit(1)
                 }
                 fmt.Println("\nAll servers verified working through Tor.")
+        case "remote":
+                listen := fs.String("listen", "127.0.0.1:8787", "HTTPS API listen address (use a firewall when non-loopback)")
+                cert := fs.String("cert", "", "TLS certificate PEM file (required)")
+                key := fs.String("key", "", "TLS private key PEM file (required)")
+                if err := fs.Parse(args); err != nil { fatal(err) }
+                token := os.Getenv("SXOPS_REMOTE_TOKEN")
+                if len(token) < 32 { fatal(fmt.Errorf("SXOPS_REMOTE_TOKEN must contain at least 32 characters; generate one with: openssl rand -hex 32")) }
+                if *cert == "" || *key == "" { fatal(fmt.Errorf("--cert and --key are required; use a TLS certificate trusted by Android")) }
+                eng, err := core.NewEngine(cliLog{})
+                if err != nil { fatal(err) }
+                fmt.Printf("sxops Android API listening on %s (HTTPS)\n", *listen)
+                if err := remoteapi.ServeTLS(*listen, *cert, *key, token, eng); err != nil { fatal(err) }
         case "daemon":
                 eng, err := core.NewEngine(cliLog{})
                 if err != nil {
